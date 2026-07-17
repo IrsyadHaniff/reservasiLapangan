@@ -32,7 +32,7 @@
                 </h1>
 
                 <p class="mt-6 text-base md:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
-                    SM-SPORT CENTER menyediakan lapangan futsal, badminton, dan basket dengan sistem reservasi online.
+                    SM-SPORT CENTER menyediakan lapangan futsal dan badminton dengan sistem reservasi online.
                     Cek ketersediaan lapangan secara langsung, tanpa perlu telepon atau datang dulu.
                 </p>
 
