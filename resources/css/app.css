@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+ 
+    /* Font display untuk logo & heading, kesan sporty/technical */
+    --font-display: 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
+ 
+    /* Warna brand SM-SPORT CENTER */
+    --color-brand: #5ce64c;         /* hijau utama (dominan) */
+    --color-brand-dark: #114722;    /* hijau tua, untuk border/section gelap */
+    --color-brand-black: #040304;   /* hampir hitam, background utama */
+ 
+    /* Status ketersediaan lapangan */
+    --color-court-available: #5ce64c;
+    --color-court-booked: #e64c4c;
+}
+ 
+/* Alpine.js: sembunyikan elemen sebelum framework siap, cegah "flash of unstyled content" */
+[x-cloak] {
+    display: none !important;
+}
