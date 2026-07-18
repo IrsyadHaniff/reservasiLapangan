@@ -1,3 +1,40 @@
+{{--
+    Komponen: Reservasi (Card Lapangan + Search & Filter)
+    Lokasi: resources/views/components/reservasi.blade.php
+
+    PENTING soal data:
+    - Data $lapangans di bawah ini CONTOH/dummy. Ganti dengan data asli dari controller,
+      misalnya lewat komponen props:
+          <x-reservasi :lapangans="$lapangans" />
+      lalu di komponen ganti "@php $lapangans = [...] @endphp" dengan "@props(['lapangans'])".
+      $lapangans idealnya array/collection dengan key: id, nama, kategori, harga, status, gambar, rating.
+
+    Kenapa filter TIDAK dibuat full client-side (x-for)?
+    - Card di-render server-side (@foreach biasa), Alpine cuma toggle x-show berdasar filter.
+    - Jadi konten lapangan tetap ada di HTML awal → tetap kebaca search engine & tetap
+      muncul walau JS gagal load (baik untuk SEO & Lighthouse), bukan cuma dirender di client.
+    - Data ringan (id/nama/kategori/status saja, bukan gambar) diduplikasi ke JS cuma untuk
+      menghitung "X dari Y hasil" & empty-state secara reaktif.
+--}}
+
+{{--
+    Komponen: Reservasi (Card Lapangan + Search & Filter)
+    Lokasi: resources/views/components/reservasi.blade.php
+
+    Data diambil dari database (tabel lapangans) lewat prop $lapangans,
+    dikirim dari controller: <x-reservasi :lapangans="$lapangans" />
+
+    Status di card ini pakai Lapangan::isPenuhHariIni() — HIJAU (Tersedia) itu
+    default, cuma jadi MERAH (Penuh) kalau SEMUA slot jam hari ini abis. Klik
+    tombol Booking tetap selalu bisa, bahkan pas lagi "Penuh" — pelanggan
+    diarahkan ke halaman booking dan bisa ganti tanggal dari situ.
+
+    Kenapa filter TIDAK dibuat full client-side (x-for)?
+    - Card di-render server-side (@foreach biasa), Alpine cuma toggle x-show berdasar filter.
+    - Jadi konten lapangan tetap ada di HTML awal → tetap kebaca search engine & tetap
+      muncul walau JS gagal load (baik untuk SEO & Lighthouse), bukan cuma dirender di client.
+--}}
+
 @props(['lapangans'])
 
 @php
@@ -5,7 +42,7 @@
     $filterItems = $lapangans->map(fn ($l) => [
         'nama' => $l->nama,
         'kategori' => $l->kategori,
-        'status' => $l->isTersediaSekarang() ? 'tersedia' : 'terisi',
+        'status' => $l->isPenuhHariIni() ? 'terisi' : 'tersedia',
     ])->values();
 @endphp
 
@@ -78,7 +115,7 @@
                             :class="filterStatus === 'terisi' ? 'bg-white shadow text-court-booked' : 'text-gray-500 hover:text-court-booked'"
                             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-150">
                         <span class="h-2 w-2 rounded-full bg-court-booked"></span>
-                        Terisi
+                        Penuh
                     </button>
                 </div>
 
@@ -106,7 +143,7 @@
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($lapangans as $lapangan)
                 @php
-                    $isTersedia = $lapangan->isTersediaSekarang();
+                    $isTersedia = ! $lapangan->isPenuhHariIni();
                 @endphp
                 <article
                     x-show="(filterStatus === 'semua' || filterStatus === '{{ $isTersedia ? 'tersedia' : 'terisi' }}')
@@ -132,7 +169,7 @@
                         <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm
                             {{ $isTersedia ? 'bg-court-available/15 text-court-available' : 'bg-court-booked/15 text-court-booked' }}">
                             <span class="h-1.5 w-1.5 rounded-full {{ $isTersedia ? 'bg-court-available animate-pulse' : 'bg-court-booked' }}"></span>
-                            {{ $isTersedia ? 'Tersedia' : 'Terisi' }}
+                            {{ $isTersedia ? 'Tersedia' : 'Penuh Hari Ini' }}
                         </span>
                     </div>
 
@@ -157,17 +194,13 @@
                                 <span class="text-gray-400 font-normal text-sm">/jam</span>
                             </p>
 
-                            @if ($isTersedia)
-                                <a href="{{ route('booking.show', $lapangan) }}"
-                                   class="inline-flex items-center px-4 py-2 rounded-full bg-brand text-brand-black text-sm font-semibold hover:bg-[#4fd43f] transition-colors duration-200">
-                                    Booking
-                                </a>
-                            @else
-                                <button type="button" disabled aria-disabled="true"
-                                        class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-400 text-sm font-semibold cursor-not-allowed">
-                                    Terisi
-                                </button>
-                            @endif
+                            {{-- Tombol Booking SELALU aktif — status "Terisi" di badge cuma info
+                                 "lagi dipakai detik ini", bukan berarti seharian penuh. Pengecekan
+                                 jam mana yang beneran kosong terjadi di halaman booking (grid jam). --}}
+                            <a href="{{ route('booking.show', $lapangan) }}"
+                               class="inline-flex items-center px-4 py-2 rounded-full bg-brand text-brand-black text-sm font-semibold hover:bg-[#4fd43f] transition-colors duration-200">
+                                Booking
+                            </a>
                         </div>
                     </div>
                 </article>

@@ -27,16 +27,9 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        // Fallback ke home selama route pelanggan.dashboard belum dibuat (giliran berikutnya)
-        if ($request->user()->role === 'admin') {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-
-        return redirect()->intended(
-            \Illuminate\Support\Facades\Route::has('pelanggan.dashboard')
-                ? route('pelanggan.dashboard')
-                : route('home')
-        );
+        return $request->user()->role === 'admin'
+            ? redirect()->intended(route('admin.dashboard'))
+            : redirect()->intended(route('pelanggan.dashboard'));
     }
 
     public function logout(Request $request)
@@ -45,6 +38,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('home');
     }
 }

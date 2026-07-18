@@ -77,7 +77,17 @@ class Lapangan extends Model
 
     public function getGambarUrlAttribute(): string
     {
-        return $this->gambar ? asset($this->gambar) : asset('assets/img/placeholder-lapangan.webp');
+        if (! $this->gambar) {
+            return asset('assets/img/placeholder-lapangan.webp');
+        }
+
+        // Data lama dari seeder pakai path assets/img/... (public folder langsung).
+        // Upload baru dari dashboard admin pakai Storage disk 'public' (storage/app/public/lapangan/...).
+        if (str_starts_with($this->gambar, 'assets/')) {
+            return asset($this->gambar);
+        }
+
+        return asset('storage/' . $this->gambar);
     }
 
     public function scopeAktif($query)
@@ -104,12 +114,32 @@ class Lapangan extends Model
         return ! $bentrok;
     }
 
-    public function isTersediaSekarang(): bool
+    /**
+     * Cek apakah SEMUA slot jam operasional (06:00-24:00, 18 slot) di tanggal
+     * tertentu sudah kepakai reservasi aktif. Dipakai buat badge "Penuh" di
+     * card reservasi — beda dari isTersediaPada() yang cek rentang jam spesifik.
+     */
+    public function isPenuhPada(string $tanggal): bool
     {
-        return $this->isTersediaPada(
-            now()->toDateString(),
-            now()->format('H:i:s'),
-            now()->format('H:i:s')
-        );
+        $slotTerpakai = [];
+
+        $this->reservasis()
+            ->aktif()
+            ->where('tanggal', $tanggal)
+            ->get(['jam_mulai', 'jam_selesai'])
+            ->each(function ($reservasi) use (&$slotTerpakai) {
+                $awal  = (int) \Illuminate\Support\Carbon::parse($reservasi->jam_mulai)->format('H');
+                $akhir = (int) \Illuminate\Support\Carbon::parse($reservasi->jam_selesai)->format('H');
+                for ($h = $awal; $h < $akhir; $h++) {
+                    $slotTerpakai[$h] = true;
+                }
+            });
+
+        return count($slotTerpakai) >= 18; // 06:00 - 24:00 = 18 slot jam
+    }
+
+    public function isPenuhHariIni(): bool
+    {
+        return $this->isPenuhPada(now()->toDateString());
     }
 }

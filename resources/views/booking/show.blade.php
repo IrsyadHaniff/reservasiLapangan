@@ -1,3 +1,20 @@
+{{--
+    Halaman: Booking
+    Lokasi: resources/views/booking/show.blade.php
+    Route: Route::get/post('/booking/{lapangan}', [BookingController::class, ...])
+
+    STATUS: Sudah tersambung ke database.
+    - $lapangan, $tanggal, $bookedIndexes dikirim dari BookingController@show (data asli).
+    - confirmPayment() fetch() POST ke BookingController@store, yang nyimpen ke tabel
+      reservasis + auto-create akun pelanggan (password default) kalau emailnya baru.
+    - Nomor pesanan hasil submit nantinya dipakai di halaman "Cek Status Pesanan"
+      (belum dibuat) untuk pelanggan tanpa akun memantau reservasinya.
+
+    PENTING: <meta name="csrf-token" content="{{ csrf_token() }}"> WAJIB ada di
+    <head> layouts/app.blade.php, karena fetch() di bawah butuh token itu untuk
+    lolos proteksi CSRF Laravel. Cek dulu sebelum test — kalau belum ada, tambahkan.
+--}}
+
 @extends('layouts.app')
 
 @section('title', $lapangan->nama . ' - Booking - SM-SPORT CENTER')
@@ -45,6 +62,9 @@
             if (this.selectedStart === null) return false;
             const next = this.selectedStart + this.duration;
             return this.duration < this.maxDurasi && next < this.slots.length && !this.booked.includes(next);
+        },
+        get isTanggalPenuh() {
+            return this.booked.length >= this.slots.length;
         },
         get jamMulaiLabel() {
             return this.selectedStart !== null ? this.slots[this.selectedStart].label : '-';
@@ -215,7 +235,15 @@
 
                             <label for="tanggal" class="block text-sm font-medium text-gray-700 mb-1.5">Tanggal Main</label>
                             <input id="tanggal" type="date" x-model="tanggal" @change="onTanggalChange()" min="{{ now()->format('Y-m-d') }}"
-                                   class="w-full sm:w-64 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand mb-5">
+                                   class="w-full sm:w-64 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand mb-3">
+
+                            {{-- Muncul kalau semua slot jam di tanggal ini sudah penuh --}}
+                            <div x-show="isTanggalPenuh" x-cloak class="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-court-booked/10 border border-court-booked/30 text-court-booked text-xs mb-4">
+                                <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12V16.5Zm9-4.5a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span>Yah, tanggal ini sudah penuh semua jamnya. Coba pilih tanggal lain ya.</span>
+                            </div>
 
                             {{-- Legenda --}}
                             <div class="flex items-center gap-4 text-xs text-gray-500 mb-4">
@@ -416,14 +444,14 @@
                 </dl>
             </div>
 
-            <p class="text-xs text-gray-500 mt-6 leading-relaxed">
-                Akun otomatis dibuat menggunakan email <span class="font-medium text-gray-900" x-text="email"></span>
-                dengan password default <span class="font-mono text-gray-900">smsport262</span>.
-                Silakan login dan segera ganti password kamu.
+            <p class="text-xs text-gray-400 mt-6 leading-relaxed">
+                Akun otomatis dibuat menggunakan email <span class="font-medium text-gray-600" x-text="email"></span>
+                dengan password default <span class="font-mono text-gray-600">smsport262</span>.
+                Pakai itu buat login di tombol "Cek Status Pesanan" di bawah, terus ganti passwordnya ya.
             </p>
 
             <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="{{ url('/cek-status') }}" class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand text-brand-black text-sm font-semibold hover:bg-[#4fd43f] transition-colors duration-200">
+                <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand text-brand-black text-sm font-semibold hover:bg-[#4fd43f] transition-colors duration-200">
                     Cek Status Pesanan
                 </a>
                 <a href="{{ url('/#reservasi') }}" class="inline-flex items-center justify-center px-6 py-3 rounded-full border border-gray-300 text-gray-700 text-sm font-semibold hover:border-brand hover:text-brand-dark transition-colors duration-200">
