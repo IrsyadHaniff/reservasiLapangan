@@ -74,7 +74,7 @@
             <div class="relative order-1 lg:order-2">
                 <div class="relative rounded-3xl overflow-hidden border border-gray-200 shadow-xl shadow-gray-200/50 aspect-[4/3]">
                     <img
-                        src="{{ asset('assets/img/preview.jpeg') }}"
+                        src="{{ asset('assets/img/preview.webp') }}"
                         alt="Lapangan futsal SM-SPORT CENTER dengan pencahayaan malam yang siap dipesan"
                         width="1200" height="900"
                         class="w-full h-full object-cover"

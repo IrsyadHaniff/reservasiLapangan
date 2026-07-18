@@ -1,12 +1,12 @@
 @php
     // Dummy data — ganti dengan data dari database
     $lapangans = [
-        ['id' => 1, 'nama' => 'Lapangan Futsal A', 'kategori' => 'Futsal', 'harga' => 150000, 'status' => 'tersedia', 'rating' => 4.9, 'gambar' => 'assets/img/lapangan-futsal/lapangan.webp'],
-        ['id' => 2, 'nama' => 'Lapangan Futsal B', 'kategori' => 'Futsal', 'harga' => 150000, 'status' => 'terisi', 'rating' => 4.8, 'gambar' => 'assets/img/lapangan-futsal/lapangan2.webp'],
-        ['id' => 3, 'nama' => 'Lapangan Badminton 1', 'kategori' => 'Badminton', 'harga' => 60000, 'status' => 'tersedia', 'rating' => 5.0, 'gambar' => 'assets/img/lapangan-badminton-1.webp'],
-        ['id' => 4, 'nama' => 'Lapangan Badminton 2', 'kategori' => 'Badminton', 'harga' => 60000, 'status' => 'terisi', 'rating' => 4.7, 'gambar' => 'assets/img/lapangan-badminton-2.webp'],
-        ['id' => 5, 'nama' => 'Lapangan Futsal C', 'kategori' => 'Futsal', 'harga' => 150000, 'status' => 'tersedia', 'rating' => 4.6, 'gambar' => 'assets/img/lapangan-futsal-c.webp'],
-        ['id' => 6, 'nama' => 'Lapangan Badminton 3', 'kategori' => 'Badminton', 'harga' => 60000, 'status' => 'tersedia', 'rating' => 4.8, 'gambar' => 'assets/img/lapangan-badminton-3.webp'],
+        ['id' => 1, 'nama' => 'Lapangan Futsal A', 'kategori' => 'Futsal', 'harga' => 90000, 'status' => 'tersedia', 'rating' => 4.9, 'gambar' => 'assets/img/lapangan-futsal/lapangan-a.webp'],
+        ['id' => 2, 'nama' => 'Lapangan Futsal B', 'kategori' => 'Futsal', 'harga' => 90000, 'status' => 'terisi', 'rating' => 4.8, 'gambar' => 'assets/img/lapangan-futsal/lapangan-b.webp'],
+        ['id' => 3, 'nama' => 'Lapangan Futsal C', 'kategori' => 'Futsal', 'harga' => 90000, 'status' => 'tersedia', 'rating' => 5.0, 'gambar' => 'assets/img/lapangan-futsal/lapangan-c.webp'],
+        ['id' => 4, 'nama' => 'Lapangan Badminton A', 'kategori' => 'Badminton', 'harga' => 70000, 'status' => 'terisi', 'rating' => 4.7, 'gambar' => 'assets/img/lapangan-badmin/badminton-a.webp'],
+        ['id' => 5, 'nama' => 'Lapangan Badminton B ', 'kategori' => 'Badminton', 'harga' => 70000, 'status' => 'tersedia', 'rating' => 4.6, 'gambar' => 'assets/img/lapangan-badmin/badminton-b.webp'],
+        ['id' => 6, 'nama' => 'Lapangan Badminton C', 'kategori' => 'Badminton', 'harga' => 70000, 'status' => 'tersedia', 'rating' => 4.8, 'gambar' => 'assets/img/lapangan-badmin/badminton-c.webp'],
     ];
     $kategoriList = collect($lapangans)->pluck('kategori')->unique()->values();
     $filterItems = collect($lapangans)->map(fn ($l) => [
