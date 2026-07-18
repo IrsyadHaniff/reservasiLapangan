@@ -1,21 +1,16 @@
 @extends('layouts.app')
 
-@section('title', 'Booking Lapangan - SM-SPORT CENTER')
+@section('title', $lapangan->nama . ' - Booking - SM-SPORT CENTER')
 
 @section('content')
 
 @php
-    // $lapangan sekarang dikirim dari BookingController via route model binding — sudah bukan dummy.
-
-    // Jam operasional 06.00 - 24.00, per slot 1 jam
+    // Jam operasional 06.00 - 24.00, per slot 1 jam — cuma buat label grid,
+    // data ketersediaan aslinya ($bookedIndexes) sudah dari controller.
     $slots = [];
     for ($h = 6; $h < 24; $h++) {
         $slots[] = ['label' => sprintf('%02d:00', $h), 'end' => sprintf('%02d:00', $h + 1)];
     }
-
-    // Dummy slot yang sudah dibooking (index array $slots, bukan jam asli)
-    // index 0 = 06:00, jadi index 4 = 10:00, dst.
-    $bookedIndexes = [2, 3, 8, 9, 10, 15];
 @endphp
 
 <div
@@ -23,16 +18,20 @@
         nama: '',
         email: '',
         hp: '',
-        tanggal: '{{ now()->format('Y-m-d') }}',
+        tanggal: '{{ $tanggal }}',
         slots: @js($slots),
         booked: @js($bookedIndexes),
         hargaPerJam: {{ $lapangan->harga_per_jam }},
+        storeUrl: '{{ route('booking.store', $lapangan) }}',
+        showUrlBase: '{{ route('booking.show', $lapangan) }}',
         selectedStart: null,
         duration: 1,
         maxDurasi: 6,
         metode: '',
         vaNumber: '',
         submitted: false,
+        isSubmitting: false,
+        errorMessage: '',
         orderNumber: '',
 
         get selectedIndexes() {
@@ -69,18 +68,59 @@
                 this.vaNumber = '7001' + Math.floor(100000000 + Math.random() * 900000000);
             }
         },
+        onTanggalChange() {
+            // Reload halaman dengan tanggal baru biar $bookedIndexes dihitung ulang
+            // dari database untuk tanggal itu (lihat BookingController@show).
+            this.selectedStart = null;
+            window.location.href = this.showUrlBase + '?tanggal=' + this.tanggal;
+        },
         isFormValid() {
             return this.nama.trim() && this.email.trim() && this.hp.trim() && this.selectedStart !== null && this.metode;
         },
         formatRupiah(n) {
             return 'Rp' + n.toLocaleString('id-ID');
         },
-        confirmPayment() {
-            if (!this.isFormValid()) return;
-            const rand = Math.floor(1000 + Math.random() * 9000);
-            this.orderNumber = 'SMSPORT-' + Date.now().toString().slice(-6) + rand;
-            this.submitted = true;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        async confirmPayment() {
+            if (!this.isFormValid() || this.isSubmitting) return;
+            this.isSubmitting = true;
+            this.errorMessage = '';
+
+            try {
+                const res = await fetch(this.storeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                    },
+                    body: JSON.stringify({
+                        nama: this.nama,
+                        email: this.email,
+                        no_hp: this.hp,
+                        tanggal: this.tanggal,
+                        jam_mulai: this.jamMulaiLabel,
+                        durasi_jam: this.duration,
+                        metode_pembayaran: this.metode,
+                    }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    // 409 = slot bentrok, 422 = validasi gagal
+                    this.errorMessage = data.message || Object.values(data.errors ?? {}).flat().join(' ') || 'Gagal membuat booking, coba lagi.';
+                    this.isSubmitting = false;
+                    return;
+                }
+
+                this.orderNumber = data.nomor_pesanan;
+                this.submitted = true;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (e) {
+                this.errorMessage = 'Gagal terhubung ke server, cek koneksi lalu coba lagi.';
+            } finally {
+                this.isSubmitting = false;
+            }
         },
         copyText(text) {
             navigator.clipboard?.writeText(text);
@@ -174,7 +214,7 @@
                             </div>
 
                             <label for="tanggal" class="block text-sm font-medium text-gray-700 mb-1.5">Tanggal Main</label>
-                            <input id="tanggal" type="date" x-model="tanggal" min="{{ now()->format('Y-m-d') }}"
+                            <input id="tanggal" type="date" x-model="tanggal" @change="onTanggalChange()" min="{{ now()->format('Y-m-d') }}"
                                    class="w-full sm:w-64 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand mb-5">
 
                             {{-- Legenda --}}
@@ -314,15 +354,24 @@
                                 <span class="font-display font-bold text-2xl text-brand-dark" x-text="formatRupiah(total)"></span>
                             </div>
 
+                            {{-- Banner error dari server (validasi gagal / slot bentrok / koneksi putus) --}}
+                            <div x-show="errorMessage" x-cloak class="mb-4 px-3 py-2.5 rounded-lg bg-court-booked/10 border border-court-booked/30 text-court-booked text-xs">
+                                <span x-text="errorMessage"></span>
+                            </div>
+
                             <button
                                 type="button"
                                 @click="confirmPayment()"
-                                :disabled="!isFormValid()"
-                                class="w-full py-3.5 rounded-full bg-brand text-brand-black font-semibold hover:bg-[#4fd43f] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200"
+                                :disabled="!isFormValid() || isSubmitting"
+                                class="w-full py-3.5 rounded-full bg-brand text-brand-black font-semibold hover:bg-[#4fd43f] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200 inline-flex items-center justify-center gap-2"
                             >
-                                Konfirmasi Pembayaran
+                                <svg x-show="isSubmitting" x-cloak class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z"></path>
+                                </svg>
+                                <span x-text="isSubmitting ? 'Memproses...' : 'Konfirmasi Pembayaran'"></span>
                             </button>
-                            <p class="text-xs text-gray-400 text-center mt-3" x-show="!isFormValid()">
+                            <p class="text-xs text-gray-400 text-center mt-3" x-show="!isFormValid() && !isSubmitting">
                                 Lengkapi data, jam, dan metode pembayaran dulu ya.
                             </p>
                         </div>
@@ -367,9 +416,9 @@
                 </dl>
             </div>
 
-            <p class="text-xs text-gray-400 mt-6 leading-relaxed">
-                Akun otomatis dibuat menggunakan email <span class="font-medium text-gray-600" x-text="email"></span>
-                dengan password default <span class="font-mono text-gray-600">smsport262</span>.
+            <p class="text-xs text-gray-500 mt-6 leading-relaxed">
+                Akun otomatis dibuat menggunakan email <span class="font-medium text-gray-900" x-text="email"></span>
+                dengan password default <span class="font-mono text-gray-900">smsport262</span>.
                 Silakan login dan segera ganti password kamu.
             </p>
 

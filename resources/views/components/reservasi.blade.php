@@ -1,18 +1,11 @@
+@props(['lapangans'])
+
 @php
-    // Dummy data — ganti dengan data dari database
-    $lapangans = [
-        ['id' => 1, 'nama' => 'Lapangan Futsal A', 'kategori' => 'Futsal', 'harga' => 90000, 'status' => 'tersedia', 'rating' => 4.9, 'gambar' => 'assets/img/lapangan-futsal/lapangan-a.webp'],
-        ['id' => 2, 'nama' => 'Lapangan Futsal B', 'kategori' => 'Futsal', 'harga' => 90000, 'status' => 'terisi', 'rating' => 4.8, 'gambar' => 'assets/img/lapangan-futsal/lapangan-b.webp'],
-        ['id' => 3, 'nama' => 'Lapangan Futsal C', 'kategori' => 'Futsal', 'harga' => 90000, 'status' => 'tersedia', 'rating' => 5.0, 'gambar' => 'assets/img/lapangan-futsal/lapangan-c.webp'],
-        ['id' => 4, 'nama' => 'Lapangan Badminton A', 'kategori' => 'Badminton', 'harga' => 70000, 'status' => 'terisi', 'rating' => 4.7, 'gambar' => 'assets/img/lapangan-badmin/badminton-a.webp'],
-        ['id' => 5, 'nama' => 'Lapangan Badminton B ', 'kategori' => 'Badminton', 'harga' => 70000, 'status' => 'tersedia', 'rating' => 4.6, 'gambar' => 'assets/img/lapangan-badmin/badminton-b.webp'],
-        ['id' => 6, 'nama' => 'Lapangan Badminton C', 'kategori' => 'Badminton', 'harga' => 70000, 'status' => 'tersedia', 'rating' => 4.8, 'gambar' => 'assets/img/lapangan-badmin/badminton-c.webp'],
-    ];
-    $kategoriList = collect($lapangans)->pluck('kategori')->unique()->values();
-    $filterItems = collect($lapangans)->map(fn ($l) => [
-        'nama' => $l['nama'],
-        'kategori' => $l['kategori'],
-        'status' => $l['status'],
+    $kategoriList = $lapangans->pluck('kategori')->unique()->values();
+    $filterItems = $lapangans->map(fn ($l) => [
+        'nama' => $l->nama,
+        'kategori' => $l->kategori,
+        'status' => $l->isTersediaSekarang() ? 'tersedia' : 'terisi',
     ])->values();
 @endphp
 
@@ -107,18 +100,18 @@
         </div>
 
         {{-- Hitung hasil --}}
-        <p class="text-sm text-gray-500 mb-6" x-text="`Menampilkan ${filteredCount} dari {{ count($lapangans) }} lapangan`"></p>
+        <p class="text-sm text-gray-500 mb-6" x-text="`Menampilkan ${filteredCount} dari {{ $lapangans->count() }} lapangan`"></p>
 
         {{-- Grid Card Lapangan --}}
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($lapangans as $lapangan)
                 @php
-                    $isTersedia = $lapangan['status'] === 'tersedia';
+                    $isTersedia = $lapangan->isTersediaSekarang();
                 @endphp
                 <article
-                    x-show="(filterStatus === 'semua' || filterStatus === '{{ $lapangan['status'] }}')
-                        && (filterKategori === 'semua' || filterKategori === '{{ $lapangan['kategori'] }}')
-                        && '{{ Str::lower($lapangan['nama']) }}'.includes(search.toLowerCase())"
+                    x-show="(filterStatus === 'semua' || filterStatus === '{{ $isTersedia ? 'tersedia' : 'terisi' }}')
+                        && (filterKategori === 'semua' || filterKategori === '{{ $lapangan->kategori }}')
+                        && '{{ Str::lower($lapangan->nama) }}'.includes(search.toLowerCase())"
                     x-transition
                     class="group relative rounded-2xl border overflow-hidden bg-white transition-all duration-200 hover:shadow-xl hover:-translate-y-1
                         {{ $isTersedia ? 'border-court-available/30 hover:border-court-available/60' : 'border-court-booked/30 hover:border-court-booked/60' }}"
@@ -129,8 +122,8 @@
                     {{-- Gambar --}}
                     <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
                         <img
-                            src="{{ asset($lapangan['gambar']) }}"
-                            alt="{{ $lapangan['nama'] }} - {{ $lapangan['kategori'] }}"
+                            src="{{ $lapangan->gambar_url }}"
+                            alt="{{ $lapangan->nama }} - {{ $lapangan->kategori }}"
                             width="400" height="300"
                             loading="lazy"
                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 {{ $isTersedia ? '' : 'grayscale-[40%]' }}"
@@ -147,25 +140,25 @@
                     <div class="p-5">
                         <div class="flex items-start justify-between gap-2">
                             <h3 class="font-display font-bold text-lg text-brand-black leading-snug">
-                                {{ $lapangan['nama'] }}
+                                {{ $lapangan->nama }}
                             </h3>
                             <span class="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-gray-500">
                                 <svg class="w-3.5 h-3.5 text-brand" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 0 0 .951.69h4.162c.969 0 1.371 1.24.588 1.81l-3.367 2.447a1 1 0 0 0-.363 1.118l1.287 3.958c.3.922-.755 1.688-1.538 1.118l-3.367-2.447a1 1 0 0 0-1.176 0l-3.367 2.447c-.783.57-1.838-.196-1.538-1.118l1.287-3.958a1 1 0 0 0-.363-1.118L2.062 9.385c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 0 0 .95-.69l1.287-3.958Z" />
                                 </svg>
-                                {{ number_format($lapangan['rating'], 1) }}
+                                {{ number_format($lapangan->rating, 1) }}
                             </span>
                         </div>
-                        <p class="text-sm text-gray-500 mt-1">{{ $lapangan['kategori'] }} · Indoor</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ $lapangan->kategori }} · Indoor</p>
 
                         <div class="flex items-center justify-between mt-4">
                             <p class="text-brand-black font-semibold">
-                                Rp{{ number_format($lapangan['harga'], 0, ',', '.') }}
+                                Rp{{ number_format($lapangan->harga_per_jam, 0, ',', '.') }}
                                 <span class="text-gray-400 font-normal text-sm">/jam</span>
                             </p>
 
                             @if ($isTersedia)
-                                <a href="{{ url('/booking/' . $lapangan['id']) }}"
+                                <a href="{{ route('booking.show', $lapangan) }}"
                                    class="inline-flex items-center px-4 py-2 rounded-full bg-brand text-brand-black text-sm font-semibold hover:bg-[#4fd43f] transition-colors duration-200">
                                     Booking
                                 </a>

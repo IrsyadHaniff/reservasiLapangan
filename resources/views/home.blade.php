@@ -6,7 +6,7 @@
 
 <x-hero />
 
-<x-reservasi />
+<x-reservasi :lapangans="$lapangans" />
 
 <x-about />
 

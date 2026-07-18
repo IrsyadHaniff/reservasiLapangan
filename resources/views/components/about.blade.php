@@ -6,7 +6,7 @@
             <div class="relative order-1">
                 <div class="relative rounded-3xl overflow-hidden border border-gray-200 shadow-xl shadow-gray-200/50 aspect-[4/3]">
                     <img
-                        src="{{ asset('assets/img/lapangan-futsal/lapangan.webp') }}"
+                        src="{{ asset('assets/img/preview.webp') }}"
                         alt="Suasana venue SM-SPORT CENTER dengan lapangan indoor dan area tunggu pelanggan"
                         width="1200" height="900"
                         loading="lazy"
