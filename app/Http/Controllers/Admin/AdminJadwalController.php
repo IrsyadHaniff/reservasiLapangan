@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Lapangan;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 
 class AdminJadwalController extends Controller
 {
@@ -13,28 +12,17 @@ class AdminJadwalController extends Controller
     {
         $tanggal = $request->input('tanggal', now()->toDateString());
 
-        $slots = [];
-        for ($h = 6; $h < 24; $h++) {
-            $slots[] = $h;
-        }
+        // 23 slot jam: 06:00-23:00 lanjut 00:00-04:00 besok (tutup jam 05:00-06:00)
+        $jamList = array_merge(range(6, 23), range(0, 4));
 
-        $lapangans = Lapangan::with(['reservasis' => function ($query) use ($tanggal) {
-            $query->aktif()->where('tanggal', $tanggal);
-        }])->orderBy('kategori')->orderBy('nama')->get();
+        $lapangans = Lapangan::orderBy('kategori')->orderBy('nama')->get();
 
-        // Precompute jam-jam mana aja yang kepakai per lapangan, biar view tinggal cek array
-        $jamTerpakai = $lapangans->mapWithKeys(function ($lapangan) {
-            $jamSet = [];
-            foreach ($lapangan->reservasis as $reservasi) {
-                $awal  = (int) Carbon::parse($reservasi->jam_mulai)->format('H');
-                $akhir = (int) Carbon::parse($reservasi->jam_selesai)->format('H');
-                for ($h = $awal; $h < $akhir; $h++) {
-                    $jamSet[$h] = $reservasi->nomor_pesanan;
-                }
-            }
-            return [$lapangan->id => $jamSet];
-        });
+        // slotTerpakaiPada() sudah pakai mulai_at/selesai_at (datetime), jadi
+        // otomatis benar walau reservasinya nyebrang tengah malam.
+        $slotTerpakai = $lapangans->mapWithKeys(fn($lapangan) => [
+            $lapangan->id => $lapangan->slotTerpakaiPada($tanggal),
+        ]);
 
-        return view('admin.jadwal.index', compact('lapangans', 'slots', 'tanggal', 'jamTerpakai'));
+        return view('admin.jadwal.index', compact('lapangans', 'jamList', 'tanggal', 'slotTerpakai'));
     }
 }

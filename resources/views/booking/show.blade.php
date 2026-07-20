@@ -22,11 +22,16 @@
 @section('content')
 
 @php
-    // Jam operasional 06.00 - 24.00, per slot 1 jam — cuma buat label grid,
-    // data ketersediaan aslinya ($bookedIndexes) sudah dari controller.
+    // Jam operasional: 06:00 - 24:00, lanjut 00:00 - 05:00 keesokan harinya.
+    // Tutup cuma 1 jam, jam 05:00-06:00 (sengaja gak dimasukkan ke daftar slot).
+    // Total 23 slot jam. Label "end" dibiarkan wrap ke 00:00 tanpa keterangan
+    // tanggal — konteksnya sudah jelas dari urutan slot di grid.
     $slots = [];
-    for ($h = 6; $h < 24; $h++) {
-        $slots[] = ['label' => sprintf('%02d:00', $h), 'end' => sprintf('%02d:00', $h + 1)];
+    foreach (array_merge(range(6, 23), range(0, 4)) as $h) {
+        $slots[] = [
+            'label' => sprintf('%02d:00', $h),
+            'end'   => sprintf('%02d:00', ($h + 1) % 24),
+        ];
     }
 @endphp
 

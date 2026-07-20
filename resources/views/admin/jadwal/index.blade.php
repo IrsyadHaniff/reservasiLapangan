@@ -16,6 +16,9 @@
             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-court-booked/20 border border-court-booked/40 inline-block"></span> Terisi</span>
         </div>
     </form>
+    <p class="text-xs text-gray-400 mb-4">
+        Jadwal 1 hari operasional: 06:00 hari ini s/d 05:00 keesokan harinya (tutup jam 05:00-06:00).
+    </p>
 
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div class="overflow-x-auto">
@@ -25,8 +28,8 @@
                         <th class="sticky left-0 bg-white px-4 py-3 text-left font-medium text-gray-500 border-b border-r border-gray-100 min-w-[160px]">
                             Lapangan
                         </th>
-                        @foreach ($slots as $jam)
-                            <th class="px-2 py-3 text-center font-medium text-gray-500 border-b border-gray-100 min-w-[52px]">
+                        @foreach ($jamList as $jam)
+                            <th class="px-2 py-3 text-center font-medium text-gray-500 border-b border-gray-100 min-w-[48px]">
                                 {{ sprintf('%02d:00', $jam) }}
                             </th>
                         @endforeach
@@ -39,18 +42,16 @@
                                 <p class="font-medium text-brand-black">{{ $lapangan->nama }}</p>
                                 <p class="text-gray-400">{{ $lapangan->kategori }}</p>
                             </td>
-                            @foreach ($slots as $jam)
-                                @php $nomorPesanan = $jamTerpakai[$lapangan->id][$jam] ?? null; @endphp
+                            @foreach ($jamList as $index => $jam)
+                                @php $terisi = in_array($index, $slotTerpakai[$lapangan->id]); @endphp
                                 <td class="text-center p-1">
                                     <div
-                                        title="{{ $nomorPesanan ? 'Terisi — ' . $nomorPesanan : 'Kosong' }}"
+                                        title="{{ $terisi ? 'Terisi' : 'Kosong' }}"
                                         class="w-full h-8 rounded-md flex items-center justify-center
-                                            {{ $nomorPesanan ? 'bg-court-booked/20 border border-court-booked/40' : 'bg-gray-50 border border-gray-100' }}"
+                                            {{ $terisi ? 'bg-court-booked/20 border border-court-booked/40' : 'bg-gray-50 border border-gray-100' }}"
                                     >
-                                        @if ($nomorPesanan)
-                                            <svg class="w-3.5 h-3.5 text-court-booked" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.707-9.293a1 1 0 0 0-1.414-1.414L9 10.586 7.707 9.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4Z" clip-rule="evenodd" transform="rotate(45 10 10)" />
-                                            </svg>
+                                        @if ($terisi)
+                                            <span class="w-2 h-2 rounded-full bg-court-booked"></span>
                                         @endif
                                     </div>
                                 </td>
@@ -58,14 +59,12 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ count($slots) + 1 }}" class="text-center text-gray-400 py-10">Belum ada data lapangan.</td>
+                            <td colspan="{{ count($jamList) + 1 }}" class="text-center text-gray-400 py-10">Belum ada data lapangan.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
-
-    <p class="text-xs text-gray-400 mt-3">Arahkan kursor ke kotak terisi untuk lihat nomor pesanannya.</p>
 
 @endsection

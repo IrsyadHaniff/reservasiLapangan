@@ -1,8 +1,3 @@
-{{--
-    Halaman: Dashboard Admin
-    Lokasi: resources/views/admin/dashboard.blade.php
---}}
-
 @extends('admin.layouts.app')
 
 @section('title', 'Dashboard - Admin SM-SPORT CENTER')
@@ -37,8 +32,9 @@
 
     {{-- Reservasi terbaru --}}
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 class="font-display font-bold text-brand-black">Reservasi Terbaru</h2>
+            <a href="{{ route('admin.reservasi.index') }}" class="text-xs text-brand-dark font-medium hover:underline">Lihat Semua</a>
         </div>
 
         @if ($reservasiTerbaru->isEmpty())

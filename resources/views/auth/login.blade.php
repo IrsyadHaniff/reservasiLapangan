@@ -1,11 +1,4 @@
-<!--
-    Halaman: Login
-    Lokasi: resources/views/auth/login.blade.php
 
-    PENTING: ini BUKAN components/login.blade.php yang sudah ada di project kamu
-    (yang itu kosong, sisa scaffolding awal — boleh dihapus kalau belum dipakai
-    di mana-mana). Ini halaman baru, taruh di folder resources/views/auth/.
--->
 <!DOCTYPE html>
 <html lang="id">
 <head>

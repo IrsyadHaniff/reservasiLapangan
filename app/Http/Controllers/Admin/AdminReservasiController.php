@@ -13,6 +13,17 @@ class AdminReservasiController extends Controller
     {
         $query = Reservasi::with('lapangan', 'user')->latest();
 
+        if ($request->filled('cari')) {
+            $cari = $request->cari;
+            $query->where(function ($q) use ($cari) {
+                $q->where('nomor_pesanan', 'like', "%{$cari}%")
+                  ->orWhereHas('user', function ($q2) use ($cari) {
+                      $q2->where('name', 'like', "%{$cari}%")
+                         ->orWhere('email', 'like', "%{$cari}%");
+                  });
+            });
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }

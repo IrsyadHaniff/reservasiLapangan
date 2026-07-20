@@ -7,6 +7,15 @@
 
     {{-- Filter --}}
     <form method="GET" class="flex flex-wrap gap-3 mb-5">
+        <label class="relative">
+            <span class="sr-only">Cari nomor pesanan / pelanggan</span>
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input type="text" name="cari" value="{{ request('cari') }}" placeholder="Cari no. pesanan / nama / email..."
+                   class="pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand">
+        </label>
+
         <select name="status" onchange="this.form.submit()"
                 class="px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand">
             <option value="">Semua Status</option>
@@ -26,7 +35,11 @@
         <input type="date" name="tanggal" value="{{ request('tanggal') }}" onchange="this.form.submit()"
                class="px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand">
 
-        @if (request()->hasAny(['status', 'lapangan_id', 'tanggal']))
+        <button type="submit" class="px-4 py-2.5 rounded-xl bg-brand-black text-white text-sm font-medium hover:bg-brand-dark transition-colors">
+            Cari
+        </button>
+
+        @if (request()->hasAny(['cari', 'status', 'lapangan_id', 'tanggal']))
             <a href="{{ route('admin.reservasi.index') }}" class="px-4 py-2.5 text-sm text-gray-500 hover:text-brand-dark">Reset filter</a>
         @endif
     </form>

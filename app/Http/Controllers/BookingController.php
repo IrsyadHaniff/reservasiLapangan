@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class BookingController extends Controller
 {
@@ -15,55 +16,47 @@ class BookingController extends Controller
     {
         $tanggal = $request->query('tanggal', now()->toDateString());
 
-        // Ambil slot jam (index 0 = 06:00) yang sudah kepakai reservasi aktif
-        // di tanggal ini, biar grid pemilihan jam di frontend akurat.
-        $bookedIndexes = $lapangan->reservasis()
-            ->aktif()
-            ->where('tanggal', $tanggal)
-            ->get(['jam_mulai', 'jam_selesai'])
-            ->flatMap(function ($reservasi) {
-                $jamAwal   = (int) Carbon::parse($reservasi->jam_mulai)->format('H');
-                $jamAkhir  = (int) Carbon::parse($reservasi->jam_selesai)->format('H');
-                return range($jamAwal - 6, $jamAkhir - 6 - 1); // -6 karena slot dimulai jam 06:00
-            })
-            ->unique()
-            ->values();
+        $bookedIndexes = $lapangan->slotTerpakaiPada($tanggal);
 
         return view('booking.show', compact('lapangan', 'tanggal', 'bookedIndexes'));
     }
 
     public function store(Request $request, Lapangan $lapangan)
     {
+        // 23 slot jam operasional per hari: 06:00-23:00, lanjut 00:00-04:00
+        // besok paginya. Jam 05:00 sengaja gak ada di daftar ini (tutup).
+        $jamValid = array_merge(
+            array_map(fn ($h) => sprintf('%02d:00', $h), range(6, 23)),
+            array_map(fn ($h) => sprintf('%02d:00', $h), range(0, 4))
+        );
+
         $validated = $request->validate([
             'nama'               => ['required', 'string', 'max:255'],
             'email'              => ['required', 'email', 'max:255'],
             'no_hp'              => ['required', 'string', 'max:20'],
             'tanggal'            => ['required', 'date', 'after_or_equal:today'],
-            'jam_mulai'          => ['required', 'date_format:H:i'],
+            'jam_mulai'          => ['required', 'date_format:H:i', Rule::in($jamValid)],
             'durasi_jam'         => ['required', 'integer', 'min:1', 'max:6'],
             'metode_pembayaran'  => ['required', 'in:qris,va_bca'],
         ]);
 
-        $jamMulai   = Carbon::createFromFormat('H:i', $validated['jam_mulai']);
-        $jamSelesai = $jamMulai->copy()->addHours($validated['durasi_jam']);
+        $jamMulaiJam = (int) substr($validated['jam_mulai'], 0, 2);
 
-        // Validasi ulang di server — JANGAN percaya slot yang dipilih di frontend,
-        // karena bisa saja slot itu baru saja dibooking orang lain sebelum request ini masuk.
-        $tersedia = $lapangan->isTersediaPada(
-            $validated['tanggal'],
-            $jamMulai->format('H:i:s'),
-            $jamSelesai->format('H:i:s')
-        );
+        // Jam 00:00-04:00 itu bagian dari "hari operasional" tanggal yang dipilih,
+        // tapi secara kalender sebenarnya jatuh di tanggal BESOKnya.
+        $mulaiAt = $jamMulaiJam >= 6
+            ? Carbon::parse($validated['tanggal'] . ' ' . $validated['jam_mulai'])
+            : Carbon::parse($validated['tanggal'])->addDay()->setTimeFromTimeString($validated['jam_mulai']);
 
-        if (! $tersedia) {
+        $selesaiAt = $mulaiAt->copy()->addHours($validated['durasi_jam']);
+
+        // Validasi ulang di server — jangan percaya slot yang dipilih di frontend.
+        if (! $lapangan->isTersediaPada($mulaiAt, $selesaiAt)) {
             return response()->json([
                 'message' => 'Yah, jam yang kamu pilih baru saja terisi. Coba pilih jam lain ya.',
             ], 409);
         }
 
-        // Cari akun pelanggan berdasarkan email. Kalau belum ada, otomatis dibuatkan
-        // dengan password default — ini yang bikin pelanggan bisa booking tanpa
-        // daftar akun manual dulu.
         $user = User::firstOrCreate(
             ['email' => $validated['email']],
             [
@@ -76,13 +69,15 @@ class BookingController extends Controller
 
         $reservasi = Reservasi::create([
             'lapangan_id'        => $lapangan->id,
-            'nama_lapangan'      => $lapangan->nama, // snapshot, sama alasannya dengan harga_per_jam
+            'nama_lapangan'      => $lapangan->nama,
             'user_id'            => $user->id,
-            'tanggal'            => $validated['tanggal'],
-            'jam_mulai'          => $jamMulai->format('H:i:s'),
-            'jam_selesai'        => $jamSelesai->format('H:i:s'),
+            'tanggal'            => $validated['tanggal'], // tanggal operasional yang dipilih pelanggan
+            'jam_mulai'          => $mulaiAt->format('H:i:s'),
+            'jam_selesai'        => $selesaiAt->format('H:i:s'),
+            'mulai_at'           => $mulaiAt,
+            'selesai_at'         => $selesaiAt,
             'durasi_jam'         => $validated['durasi_jam'],
-            'harga_per_jam'      => $lapangan->harga_per_jam, // snapshot harga saat ini
+            'harga_per_jam'      => $lapangan->harga_per_jam,
             'total_harga'        => $lapangan->harga_per_jam * $validated['durasi_jam'],
             'metode_pembayaran'  => $validated['metode_pembayaran'],
             'status'             => Reservasi::STATUS_MENUNGGU,

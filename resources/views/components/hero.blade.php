@@ -51,7 +51,7 @@
                 </div>
 
                 {{-- Statistik singkat --}}
-                <dl class="mt-10 grid grid-cols-3 gap-4 max-w-md mx-auto lg:mx-0 border-t border-gray-200 pt-6">
+                {{-- <dl class="mt-10 grid grid-cols-3 gap-4 max-w-md mx-auto lg:mx-0 border-t border-gray-200 pt-6">
                     <div>
                         <dt class="sr-only">Jumlah lapangan</dt>
                         <dd class="font-display font-bold text-2xl md:text-3xl text-brand-black">12+</dd>
@@ -67,7 +67,7 @@
                         <dd class="font-display font-bold text-2xl md:text-3xl text-brand-black">2rb+</dd>
                         <dd class="text-xs md:text-sm text-gray-500">Pelanggan</dd>
                     </div>
-                </dl>
+                </dl> --}}
             </div>
 
             {{-- Kolom Gambar --}}
@@ -87,7 +87,7 @@
 
                 {{-- Kartu status ketersediaan mengambang: signature element,
                      mengecho sistem warna hijau/merah yang dipakai di seluruh app --}}
-                <div class="absolute -bottom-6 left-4 right-4 sm:left-6 sm:right-auto sm:w-64 bg-white border border-gray-200 rounded-2xl p-4 shadow-xl shadow-gray-300/40">
+                {{-- <div class="absolute -bottom-6 left-4 right-4 sm:left-6 sm:right-auto sm:w-64 bg-white border border-gray-200 rounded-2xl p-4 shadow-xl shadow-gray-300/40">
                     <p class="text-xs font-medium text-gray-400 mb-2">Status hari ini</p>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between text-sm">
@@ -105,7 +105,7 @@
                             </span>
                         </div>
                     </div>
-                </div>
+                </div> --}}
             </div>
         </div>
     </div>

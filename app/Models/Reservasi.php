@@ -24,6 +24,8 @@ class Reservasi extends Model
         'tanggal',
         'jam_mulai',
         'jam_selesai',
+        'mulai_at',
+        'selesai_at',
         'durasi_jam',
         'harga_per_jam',
         'total_harga',
@@ -34,6 +36,8 @@ class Reservasi extends Model
 
     protected $casts = [
         'tanggal'       => 'date',
+        'mulai_at'      => 'datetime',
+        'selesai_at'    => 'datetime',
         'durasi_jam'    => 'integer',
         'harga_per_jam' => 'integer',
         'total_harga'   => 'integer',
